@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "MainActivity"
-        private const val CREATE_REQUEST_CODE = 949
+        private const val CREATE_REQUEST_CODE = 248
     }
 
     private lateinit var clRoot: ConstraintLayout
