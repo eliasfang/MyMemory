@@ -91,7 +91,6 @@ class CreateActivity : AppCompatActivity() {
                     requestPermission(this@CreateActivity, READ_PHOTOS_PERMISSION, READ_EXTERNAL_PHOTOS_CODE)
                 }
             }
-
         })
         rvImagePicker.adapter = adapter
         rvImagePicker.setHasFixedSize(true)

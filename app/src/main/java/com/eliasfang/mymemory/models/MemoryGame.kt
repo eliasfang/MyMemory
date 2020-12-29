@@ -47,7 +47,7 @@ class MemoryGame(private val boardSize: BoardSize, customImages: List<String>?) 
             return false
         }
         cards[position1].isMatched = true
-        cards[position2].isMatched = false
+        cards[position2].isMatched = true
         numPairsFound++
         return true
     }
