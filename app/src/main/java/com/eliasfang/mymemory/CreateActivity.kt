@@ -25,6 +25,11 @@ import com.eliasfang.mymemory.utils.BitmapScaler
 import com.eliasfang.mymemory.utils.EXTRA_BOARD_SIZE
 import com.eliasfang.mymemory.utils.isPermissionGranted
 import com.eliasfang.mymemory.utils.requestPermission
+import com.google.android.gms.tasks.Task
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.UploadTask
+import com.google.firebase.storage.ktx.storage
 import java.io.ByteArrayOutputStream
 
 class CreateActivity : AppCompatActivity() {
@@ -38,14 +43,16 @@ class CreateActivity : AppCompatActivity() {
         private const val MAX_GAME_NAME_LENGTH = 14
     }
 
-    private lateinit var adapter: ImagePickerAdapter
     private lateinit var rvImagePicker: RecyclerView
     private lateinit var etGameName: EditText
     private lateinit var btnSave: Button
 
+    private lateinit var adapter: ImagePickerAdapter
     private lateinit var boardSize: BoardSize
     private var numImagesRequired = -1
     private val chosenImageUris = mutableListOf<Uri>()
+    private val storage = Firebase.storage
+    private val db = Firebase.firestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -138,10 +145,40 @@ class CreateActivity : AppCompatActivity() {
     }
 
     private fun saveDataToFirebase() {
+        val customGameName = etGameName.text.toString()
         Log.i(TAG, "saveDataToFirebase")
+        var didEncounterError = false
+        val uploadedImageUrls = mutableListOf<String>()
         for ((index, photoUri) in chosenImageUris.withIndex()) {
             val imageByteArray = getImageByteArray(photoUri)
+            val filePath = "images/$customGameName/${System.currentTimeMillis()}-${index}.jpg"
+            val photoReference = storage.reference.child(filePath)
+            photoReference.putBytes(imageByteArray)
+                .continueWithTask { photoUploadTask ->
+                    Log.i(TAG, "Uploaded bytes: ${photoUploadTask.result?.bytesTransferred}")
+                    photoReference.downloadUrl
+                }.addOnCompleteListener { downloadUrlTask ->
+                    if (!downloadUrlTask.isSuccessful) {
+                        Log.e(TAG, "Exception with Firebase storage", downloadUrlTask.exception)
+                        Toast.makeText(this, "Failed to upload image", Toast.LENGTH_SHORT).show()
+                        didEncounterError = true
+                        return@addOnCompleteListener
+                    }
+                    if (didEncounterError) {
+                        return@addOnCompleteListener
+                    }
+                    val downloadUrl = downloadUrlTask.result.toString()
+                    uploadedImageUrls.add(downloadUrl)
+                    Log.i(TAG, "Finished uploading $photoUri, num uploaded ${uploadedImageUrls.size}")
+                    if (uploadedImageUrls.size == chosenImageUris.size) {
+                        handleAllImagesUploaded(customGameName, uploadedImageUrls)
+                    }
+                }
         }
+    }
+
+    private fun handleAllImagesUploaded(gameName: String, imageUrls: MutableList<String>) {
+        // TODO: upload this info to Firestore
     }
 
     private fun getImageByteArray(photoUri: Uri): ByteArray {
