@@ -48,7 +48,7 @@ class MainActivity : AppCompatActivity() {
     private var customGameImages: List<String>? = null
     private lateinit var memoryGame: MemoryGame
     private lateinit var adapter: MemoryBoardAdapter
-    private var boardSize: BoardSize = BoardSize.EASY
+    private lateinit var boardSize: BoardSize
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +58,7 @@ class MainActivity : AppCompatActivity() {
         rvBoard = findViewById(R.id.rvBoard)
         tvNumMoves = findViewById(R.id.tvNumMoves)
         tvNumPairs = findViewById(R.id.tvNumPairs)
+        boardSize = intent.getSerializableExtra((EXTRA_BOARD_SIZE)) as BoardSize
 
         setupBoard()
     }
